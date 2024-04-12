@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 int contador;
+int conectados;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
@@ -22,13 +23,22 @@ typedef struct {
 	int num;
 } ListaConectados;
 
+ListaConectados lista;
 
-void DameConectados(ListaConectados *lista, char conectados[300]) {
-	sprintf(conectados, "%d", lista->num);
-	for(int i = 0; i < lista->num; ++i) {
-		sprintf(conectados, "%s/%s",conectados, lista->conectados[i].nombre);
+void DameConectados(ListaConectados* lista, char conectados[300])
+{
+	int i;
+	char temp[300];
+	
+	//sprintf(conectados, "9-%d", lista->num);
+	
+	for (i = 0; i < lista->num; i++)
+	{
+		sprintf(temp, "%s\n", lista->conectados[i].nombre);
+		strcat(conectados, temp);
 	}
 }
+
 int Eliminar(ListaConectados *lista, char nombre[20]) {
 	//devuelve 0 si elimina y -1 si no esta en la lista
 	int pos = DamePosicion(lista, nombre);
@@ -249,10 +259,9 @@ char* registro(char nombre[20], char contra[20], char respuesta[512], MYSQL *con
 
 
 void *AtenderCliente(void *socket) {
-	ListaConectados lista;
-	lista.num = 0;
 	char peticion[512];
 	char respuesta[512];
+	char contestacion[512];
 	int err, ret;
 	char consulta [80];
 	int sock_conn;
@@ -307,8 +316,11 @@ void *AtenderCliente(void *socket) {
 			strcpy(contra, p);
 			strcpy(respuesta, logueo(nombre, contra, respuesta, conn, err, consulta));
 			if (strcmp(respuesta, "Error") != 0)  {
+				pthread_mutex_lock(&mutex);
+				conectados++;
+				pthread_mutex_unlock(&mutex);
 				Ponga(&lista, nombre, s);
-				printf("Logeado: %s\n", lista.conectados[0].nombre);
+				printf("Logeado: %s %d\n", lista.conectados[0].nombre, conectados);
 			}
 			//si respuesta es diferente de error metemos el nombre en la lista de conectados
 		}	
@@ -334,30 +346,51 @@ void *AtenderCliente(void *socket) {
 		else if (codigo == 7){ //cerrar sesion
 			printf("Codigo: %d Nombre: %s\n", codigo, nombre);
 			int eli = Eliminar(&lista, nombre);
+			contador--;
 			sprintf(respuesta, "%d" ,eli);
 		}
-		else if (codigo == 8){ //contador de tareas
+		else if (codigo == 9){ //contador de tareas
 			sprintf(respuesta,"%d", contador);
+		}
+		else if (codigo == 8) {
+			
 		}
 		if (codigo != 0) {
 			printf("Respuesta: %s\n", respuesta);
 			//enviamos
 			write(sock_conn, respuesta, strlen(respuesta));
 		}
-		if (codigo >= 1 && codigo <= 7) {
+		if (codigo >= 1 && codigo <= 7 || codigo == 9) {
 			pthread_mutex_lock(&mutex);
 			contador++;
+			DameConectados(&lista, contestacion);
+			sprintf(respuesta, "%s", contestacion);
+			write(sock_conn, respuesta, strlen(respuesta));
 			pthread_mutex_unlock(&mutex);
 		}
 	}
-	close(sock_conn);
-	mysql_close (conn);
-	exit(0);
 }
 
 
 int main(int argc, char *argv[]) {
+	int *s;
 	int sock_conn, sock_listen;
+	s = (int *) socket;
+	sock_conn = *s;
+	MYSQL *conn;
+	//conexion con la base de datos
+	conn = mysql_init(NULL);
+	if (conn==NULL) {
+		printf ("Error al crear la conexion: %u %s\n", mysql_errno(conn), mysql_error(conn));
+		exit (1);
+	}
+	//inicializar la conexiￃﾳn, entrando nuestras claves de acceso y
+	//el nombre de la base de datos a la que queremos acceder
+	conn = mysql_real_connect (conn, "localhost","root", "mysql", "juego",0, NULL, 0);
+	if (conn==NULL) {
+		printf ("Error al inicializar la conexion: %u %s\n", mysql_errno(conn), mysql_error(conn));
+		exit (1);
+	}
 	struct sockaddr_in serv_adr;
 	//inicializacion
 	//abrimos socket
@@ -389,5 +422,8 @@ int main(int argc, char *argv[]) {
 		pthread_create(&thread, NULL, AtenderCliente, &sockets[i]);
 		i++;
 	}
+	close(sock_conn);
+	mysql_close (conn);
+	exit(0);
 }
 

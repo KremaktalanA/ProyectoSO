@@ -294,7 +294,7 @@
             this.nServicios.Name = "nServicios";
             this.nServicios.Size = new System.Drawing.Size(208, 89);
             this.nServicios.TabIndex = 18;
-            this.nServicios.Text = "¿Cuantos servicios?";
+            this.nServicios.Text = "Actualizar";
             this.nServicios.UseVisualStyleBackColor = true;
             this.nServicios.Click += new System.EventHandler(this.nServicios_Click);
             // 

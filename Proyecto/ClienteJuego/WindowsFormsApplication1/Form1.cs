@@ -187,6 +187,7 @@ namespace WindowsFormsApplication1
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split(',')[0];
+            mensaje = mensaje.Substring(0, mensaje.Length - 1);
             contLbl.Text = mensaje;
         }
     }
