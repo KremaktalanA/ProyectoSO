@@ -178,7 +178,7 @@ namespace WindowsFormsApplication1
         private void nServicios_Click(object sender, EventArgs e)
         {
             //Pedir
-            string mensaje = "8/";
+            string mensaje = "9/";
 
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(mensaje);
             server.Send(msg);
@@ -186,6 +186,7 @@ namespace WindowsFormsApplication1
             //Recibimos la respuesta del servidor
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
+            contLbl.Text =  "";
             mensaje = Encoding.ASCII.GetString(msg2).Split(',')[0];
             mensaje = mensaje.Substring(0, mensaje.Length - 1);
             contLbl.Text = mensaje;
