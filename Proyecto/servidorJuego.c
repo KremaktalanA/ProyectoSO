@@ -297,7 +297,7 @@ void *AtenderCliente(void *socket) {
 		char *p = strtok(peticion, "/");
 		int codigo = atoi(p);
 		char nombre[20];
-		if (codigo != 0 && codigo != 8) {
+		if (codigo != 0 && codigo != 8 && codigo != 9) {
 			p = strtok(NULL, "/");
 			strcpy(nombre, p);
 			printf("Codigo: %d, Nombre: %s\n", codigo, nombre);
@@ -312,15 +312,17 @@ void *AtenderCliente(void *socket) {
 		}
 		else if (codigo == 2) {//logueo
 			p = strtok(NULL, "/");
-			char contra[20];
-			strcpy(contra, p);
-			strcpy(respuesta, logueo(nombre, contra, respuesta, conn, err, consulta));
-			if (strcmp(respuesta, "Error") != 0)  {
+			if (p != NULL) {
+				char contra[20];
+				strcpy(contra, p);
+				strcpy(respuesta, logueo(nombre, contra, respuesta, conn, err, consulta));
 				pthread_mutex_lock(&mutex);
-				conectados++;
+				if (strcmp(respuesta, "Error") != 0)  {
+					conectados++;
+					Ponga(&lista, nombre, s);
+					printf("Logeado: %s %d\n", lista.conectados[0].nombre, conectados);
+				}
 				pthread_mutex_unlock(&mutex);
-				Ponga(&lista, nombre, s);
-				printf("Logeado: %s %d\n", lista.conectados[0].nombre, conectados);
 			}
 			//si respuesta es diferente de error metemos el nombre en la lista de conectados
 		}	
@@ -349,23 +351,24 @@ void *AtenderCliente(void *socket) {
 			contador--;
 			sprintf(respuesta, "%d" ,eli);
 		}
-		else if (codigo == 9){ //contador de tareas
+		else if (codigo == 8){ //contador de tareas
 			sprintf(respuesta,"%d", contador);
 		}
-		else if (codigo == 8) {
-			
+		else if (codigo == 9) {
+			pthread_mutex_lock(&mutex);
+			DameConectados(&lista, contestacion);
+			sprintf(respuesta, "%s", contestacion);
+			write(sock_conn, respuesta, strlen(respuesta));
+			pthread_mutex_unlock(&mutex);
 		}
 		if (codigo != 0) {
 			printf("Respuesta: %s\n", respuesta);
 			//enviamos
 			write(sock_conn, respuesta, strlen(respuesta));
 		}
-		if (codigo >= 1 && codigo <= 7 || codigo == 9) {
+		if (codigo >= 1 && codigo <= 7) {
 			pthread_mutex_lock(&mutex);
 			contador++;
-			DameConectados(&lista, contestacion);
-			sprintf(respuesta, "%s", contestacion);
-			write(sock_conn, respuesta, strlen(respuesta));
 			pthread_mutex_unlock(&mutex);
 		}
 	}
