@@ -321,6 +321,10 @@ void *AtenderCliente(void *socket) {
 					conectados++;
 					Ponga(&lista, nombre, s);
 					printf("Logeado: %s %d\n", lista.conectados[0].nombre, conectados);
+					
+					DameConectados(&lista, contestacion);
+					sprintf(respuesta, "%s", contestacion);
+					write(sock_conn, respuesta, strlen(respuesta));
 				}
 				pthread_mutex_unlock(&mutex);
 			}
@@ -346,10 +350,15 @@ void *AtenderCliente(void *socket) {
 			
 		}
 		else if (codigo == 7){ //cerrar sesion
+			pthread_mutex_lock(&mutex);
 			printf("Codigo: %d Nombre: %s\n", codigo, nombre);
 			int eli = Eliminar(&lista, nombre);
 			contador--;
+			DameConectados(&lista, contestacion);
+			//sprintf(respuesta, "%s", contestacion);
 			sprintf(respuesta, "%d" ,eli);
+			write(sock_conn, respuesta, strlen(respuesta));
+			pthread_mutex_unlock(&mutex);
 		}
 		else if (codigo == 8){ //contador de tareas
 			sprintf(respuesta,"%d", contador);

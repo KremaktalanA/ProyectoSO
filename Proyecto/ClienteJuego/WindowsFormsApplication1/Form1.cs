@@ -112,10 +112,15 @@ namespace WindowsFormsApplication1
             UsuarioLog = mensaje;
             if (UsuarioLog != "Error" && !logeado)
             {
-                usuarioActual.Text = UsuarioLog;
+                usuarioActual.Text = nombreReg.Text;
                 logeado = true;
+                contLbl.Text = mensaje;
             }
             else MessageBox.Show("Cierra sesión antes de logearte");
+
+            /*mensaje = Encoding.ASCII.GetString(msg2).Split(',')[0];
+            mensaje = mensaje.Substring(0, mensaje.Length - 1);*/
+            
         }
 
         private void conectarBoton_Click(object sender, EventArgs e)
@@ -170,6 +175,8 @@ namespace WindowsFormsApplication1
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
             mensaje = Encoding.ASCII.GetString(msg2).Split(',')[0];
+            //mensaje = mensaje.Substring(0, mensaje.Length - 1);
+            contLbl.Text = mensaje.Replace(UsuarioLog, "");
             UsuarioLog = "";
             usuarioActual.Text = "";
             logeado = false;
@@ -187,6 +194,7 @@ namespace WindowsFormsApplication1
             byte[] msg2 = new byte[80];
             server.Receive(msg2);
             contLbl.Text =  "";
+            mensaje = "";
             mensaje = Encoding.ASCII.GetString(msg2).Split(',')[0];
             mensaje = mensaje.Substring(0, mensaje.Length - 1);
             contLbl.Text = mensaje;
